@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebView Message Benchmark</title>
+    <script>
+
+(function() {
+    var data = []
+    var lastNow = 0;
+
+    function messageHandler(event) {
+        if(event.data.length <= 5) {
+            if(event.data === "start") {
+                data = [];
+                lastNow = performance.now();
+            }
+            if(event.data === "end") {
+                outputResults();
+            }
+            return;
+        }
+
+        time = performance.now() - lastNow;
+        data.push([event.data.length, time]);
+        lastNow = performance.now();
+    }
+
+    function outputResults() {
+        var resultText = "";
+        for(var i = 0; i < data.length; ++i) {
+            resultText += data[i][0].toString() + " characters, " + data[i][1].toFixed(2) + " ms\n";
+        }
+        document.getElementById("results").innerText = resultText;
+    }
+
+    window.addEventListener("message", messageHandler, false);
+})();
+
+
+    </script>
+
+</head>
+
+<body>
+    <div id="results">
+        Results will appear here.
+    </div>
+</body>
+
+</html>
