@@ -10,6 +10,7 @@
 (function() {
     var data = []
     var lastNow = 0;
+    var receivedMessage = 0;
 
     function messageHandler(event) {
         if(event.data.length <= 5) {
@@ -25,6 +26,7 @@
 
         time = performance.now() - lastNow;
         data.push([event.data.length, time]);
+        receivedMessage = event.data;
         lastNow = performance.now();
     }
 
@@ -33,6 +35,13 @@
         for(var i = 0; i < data.length; ++i) {
             resultText += data[i][0].toString() + " characters, " + data[i][1].toFixed(2) + " ms\n";
         }
+
+        resultText += "\nFirst 10 code units:\n";
+        for(var i = 0; i < 10; ++i) {
+            resultText += i.toString() + ": 0x" + receivedMessage.charCodeAt(i).toString(16) + "\n";
+        }
+        resultText += "\n";
+
         document.getElementById("results").innerText = resultText;
     }
 

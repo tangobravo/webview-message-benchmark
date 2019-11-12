@@ -45,6 +45,16 @@ public class MainActivity extends AppCompatActivity {
 
         startMessage = new WebMessageCompat("start");
         StringBuilder sb = new StringBuilder();
+        sb.append((char)0);
+        sb.append((char)0xd814);
+        sb.append((char)0xd810);
+        sb.append((char)0x0015);
+        sb.append((char)0x0100);
+        sb.append((char)0xdfff);
+        sb.append((char)0xffdc);
+        sb.append((char)0xdcff);
+        sb.append((char)0xd801);
+        sb.append((char)0xe000);
         sb.setLength(50);
         smallMessage = new WebMessageCompat(sb.toString());
         sb.setLength(500000);
