@@ -2,15 +2,29 @@
     var data = []
     var lastNow = 0;
     var receivedMessage = 0;
+    var nativeMessagePort = 0;
+
+    function messageFromPort(event) {
+        console.log("received message from port");
+    }
+
+    function setNativeMessagePort(port) {
+        nativeMessagePort = port;
+        nativeMessagePort.onmessage = messageFromPort;
+        nativeMessagePort.postMessage("Hello from the Web world");
+    }
 
     function messageHandler(event) {
-        if(event.data.length <= 5) {
+        if(event.data.length <= 6) {
             if(event.data === "start") {
                 data = [];
                 lastNow = performance.now();
             }
             if(event.data === "end") {
                 outputResults();
+            }
+            if(event.data == "msgchn") {
+                setNativeMessagePort(event.ports[0]);
             }
             return;
         }

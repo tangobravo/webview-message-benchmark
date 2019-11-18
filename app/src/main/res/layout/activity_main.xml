@@ -15,6 +15,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/createChannelButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="createMessageChannel"
+        android:text="Create Message Channel"
+        app:layout_constraintStart_toEndOf="@id/postMessagesButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <WebView
         android:id="@+id/webview"
         android:layout_width="0dp"

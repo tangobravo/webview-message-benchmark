@@ -2,6 +2,7 @@ package com.tangobravo.webviewmessagebenchmark;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebMessageCompat;
+import androidx.webkit.WebMessagePortCompat;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
@@ -24,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private WebMessageCompat largeMessage;
     private WebMessageCompat endMessage;
 
+    private WebMessagePortCompat nativePort;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +37,11 @@ public class MainActivity extends AppCompatActivity {
 
         webView = (WebView)findViewById(R.id.webview);
         webView.getSettings().setJavaScriptEnabled(true);
+
+        if(WebViewFeature.isFeatureSupported(WebViewFeature.CREATE_WEB_MESSAGE_CHANNEL))
+        {
+            WebMessagePortCompat[] ports = WebViewCompat.createWebMessageChannel(webView);
+        }
 
         try {
             String html = readWholeAssetFile("test.html", "utf-8");
@@ -81,6 +89,44 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i("WebViewMessages",
                 String.format("Post messages finished in %f ms", postTime / 1000000.0));
+    }
+
+    public void createMessageChannel(View view) {
+        if(!WebViewFeature.isFeatureSupported(WebViewFeature.CREATE_WEB_MESSAGE_CHANNEL)) return;
+        if(!WebViewFeature.isFeatureSupported(WebViewFeature.POST_WEB_MESSAGE)) return;
+        if(!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_PORT_SET_MESSAGE_CALLBACK)) return;
+        if(!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_PORT_POST_MESSAGE)) return;
+        if(!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_CALLBACK_ON_MESSAGE)) return;
+        if(nativePort != null) return;
+
+        Log.i("WebViewMessages", "Create message channel");
+
+        long startTime = System.nanoTime();
+
+        WebMessagePortCompat[] ports = WebViewCompat.createWebMessageChannel(webView);
+        nativePort = ports[0];
+        nativePort.setWebMessageCallback(new MessageCallback());
+
+        WebMessagePortCompat[] transferPorts = {ports[1]};
+        WebMessageCompat portMessage = new WebMessageCompat("msgchn", transferPorts);
+        Uri targetOrigin = Uri.fromParts("https", "example.chromium.org", null);
+        WebViewCompat.postWebMessage(webView, portMessage, targetOrigin);
+
+        long createTime = System.nanoTime() - startTime;
+
+        Log.i("WebViewMessages",
+                String.format("Create message channel finished in %f ms", createTime / 1000000.0));
+    }
+
+    public class MessageCallback extends WebMessagePortCompat.WebMessageCallbackCompat {
+
+        public void onMessage(WebMessagePortCompat port, WebMessageCompat message) {
+            Log.i("WebViewMessages", "Received message: " + message.getData());
+
+            nativePort.postMessage(new WebMessageCompat("Hello from the native side"));
+            Log.i("WebViewMessages", "Attempted to send reply");
+        };
+
     }
 
     private String readWholeAssetFile(String path, String encoding) throws IOException {
