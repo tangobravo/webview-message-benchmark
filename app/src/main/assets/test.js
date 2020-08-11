@@ -3,15 +3,28 @@
     var lastNow = 0;
     var receivedMessage = 0;
     var nativeMessagePort = 0;
+    var channelTestLoop = false;
 
     function messageFromPort(event) {
-        console.log("received message from port");
+        console.log("received message from port, length " + event.data.length);
+        if(channelTestLoop) nativeMessagePort.postMessage("app://data?len=1000000");
     }
 
     function setNativeMessagePort(port) {
         nativeMessagePort = port;
         nativeMessagePort.onmessage = messageFromPort;
-        nativeMessagePort.postMessage("Hello from the Web world");
+        document.getElementById("channelDiv").style.display = "block";
+        document.getElementById("startChannelTest").onclick = startChannelTest;
+        document.getElementById("stopChannelTest").onclick = stopChannelTest;
+    }
+
+    function startChannelTest() {
+        channelTestLoop = true;
+        nativeMessagePort.postMessage("app://data?len=1000000");
+    }
+
+    function stopChannelTest() {
+        channelTestLoop = false;
     }
 
     function messageHandler(event) {

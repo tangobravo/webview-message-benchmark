@@ -38,11 +38,6 @@ public class MainActivity extends AppCompatActivity {
         webView = (WebView)findViewById(R.id.webview);
         webView.getSettings().setJavaScriptEnabled(true);
 
-        if(WebViewFeature.isFeatureSupported(WebViewFeature.CREATE_WEB_MESSAGE_CHANNEL))
-        {
-            WebMessagePortCompat[] ports = WebViewCompat.createWebMessageChannel(webView);
-        }
-
         try {
             String html = readWholeAssetFile("test.html", "utf-8");
             webView.loadDataWithBaseURL("https://example.chromium.org", html,
@@ -105,7 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
         WebMessagePortCompat[] ports = WebViewCompat.createWebMessageChannel(webView);
         nativePort = ports[0];
-        nativePort.setWebMessageCallback(new MessageCallback());
+
+        BinaryMessageCallback callback = new BinaryMessageCallback(nativePort);
+        nativePort.setWebMessageCallback(callback);
 
         WebMessagePortCompat[] transferPorts = {ports[1]};
         WebMessageCompat portMessage = new WebMessageCompat("msgchn", transferPorts);
@@ -116,17 +113,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i("WebViewMessages",
                 String.format("Create message channel finished in %f ms", createTime / 1000000.0));
-    }
-
-    public class MessageCallback extends WebMessagePortCompat.WebMessageCallbackCompat {
-
-        public void onMessage(WebMessagePortCompat port, WebMessageCompat message) {
-            Log.i("WebViewMessages", "Received message: " + message.getData());
-
-            nativePort.postMessage(new WebMessageCompat("Hello from the native side"));
-            Log.i("WebViewMessages", "Attempted to send reply");
-        };
-
     }
 
     private String readWholeAssetFile(String path, String encoding) throws IOException {
