@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         sb.append((char)0xe000);
         sb.setLength(50);
         smallMessage = new WebMessageCompat(sb.toString());
-        sb.setLength(500000);
+        sb.setLength(1000000);
         largeMessage = new WebMessageCompat(sb.toString());
         endMessage = new WebMessageCompat("end");
     }
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         WebViewCompat.postWebMessage(webView, startMessage, targetOrigin);
         for(int i = 0; i < 10; ++i)
             WebViewCompat.postWebMessage(webView, smallMessage, targetOrigin);
-        for(int i = 0; i < 10; ++i)
+        for(int i = 0; i < 50; ++i)
             WebViewCompat.postWebMessage(webView, largeMessage, targetOrigin);
         WebViewCompat.postWebMessage(webView, endMessage, targetOrigin);
 
