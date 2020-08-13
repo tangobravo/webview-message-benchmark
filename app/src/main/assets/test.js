@@ -18,12 +18,14 @@
         document.getElementById("stopChannelTest").onclick = stopChannelTest;
     }
 
-    function startChannelTest() {
+    function startChannelTest(e) {
+        e.preventDefault();
         channelTestLoop = true;
         nativeMessagePort.postMessage("app://data?len=1000000");
     }
 
-    function stopChannelTest() {
+    function stopChannelTest(e) {
+        e.preventDefault();
         channelTestLoop = false;
     }
 
