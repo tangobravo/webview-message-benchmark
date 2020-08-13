@@ -14,6 +14,8 @@ public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallba
     }
 
     private WebMessagePortCompat nativePort;
+    private WebMessageCompat webMessage;
+    private int messageLen = 0;
 
     public BinaryMessageCallback(WebMessagePortCompat port) {
         nativePort = port;
@@ -36,9 +38,18 @@ public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallba
         String lenStr = messageUri.getQueryParameter("len");
         if(lenStr == null) return;
         int len = Integer.parseInt(lenStr);
-        String binaryString = fillRandomString(len);
 
-        nativePort.postMessage(new WebMessageCompat(binaryString));
+        long start = System.nanoTime();
+        if(messageLen != len) {
+            String binaryString = fillRandomString(len);
+            webMessage = new WebMessageCompat(binaryString);
+            messageLen = len;
+        }
+        long fillTime = System.nanoTime() - start;
+        start = System.nanoTime();
+        nativePort.postMessage(webMessage);
+        long postTime = System.nanoTime() - start;
+        Log.i("WebMessageBenchmark", String.format("Filling string: %d us, Posting message: %d us", (fillTime / 1000), (postTime / 1000)));
     }
 
     private native String fillRandomString(int length);
