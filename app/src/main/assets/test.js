@@ -2,8 +2,11 @@
     var data = []
     var lastNow = 0;
     var receivedMessage = 0;
+    var postMessageActive = false;
+
     var nativeMessagePort = 0;
     var channelTestLoop = false;
+    var mainFrameTestLoop = false;
 
     function messageFromPort(event) {
         console.log("received message from port, length " + event.data.length);
@@ -15,18 +18,32 @@
         nativeMessagePort.onmessage = messageFromPort;
         document.getElementById("channelDiv").style.display = "block";
         document.getElementById("startChannelTest").onclick = startChannelTest;
-        document.getElementById("stopChannelTest").onclick = stopChannelTest;
+        document.getElementById("startMainFrameTest").onclick = startMainFrameTest;
+        document.getElementById("stopTests").onclick = stopTests;
     }
 
     function startChannelTest(e) {
         e.preventDefault();
-        channelTestLoop = true;
-        nativeMessagePort.postMessage("app://data?len=1000000");
+        if(!channelTestLoop) {
+            channelTestLoop = true;
+            mainFrameTestLoop = false;
+            nativeMessagePort.postMessage("app://data?len=1000000");
+        }
     }
 
-    function stopChannelTest(e) {
+    function startMainFrameTest(e) {
+        e.preventDefault();
+        if(!mainFrameTestLoop) {
+            channelTestLoop = false;
+            mainFrameTestLoop = true;
+            nativeMessagePort.postMessage("app://data?len=1000000&mainFrame");
+        }
+    }
+
+    function stopTests(e) {
         e.preventDefault();
         channelTestLoop = false;
+        mainFrameTestLoop = false;
     }
 
     function messageHandler(event) {
@@ -34,9 +51,11 @@
             if(event.data === "start") {
                 data = [];
                 lastNow = performance.now();
+                postMessageActive = true;
             }
             if(event.data === "end") {
                 outputResults();
+                postMessageActive = false;
             }
             if(event.data == "msgchn") {
                 setNativeMessagePort(event.ports[0]);
@@ -44,10 +63,16 @@
             return;
         }
 
-        time = performance.now() - lastNow;
-        data.push([event.data.length, time]);
-        receivedMessage = event.data;
-        lastNow = performance.now();
+        if(postMessageActive) {
+            time = performance.now() - lastNow;
+            data.push([event.data.length, time]);
+            receivedMessage = event.data;
+            lastNow = performance.now();
+            return;
+        }
+
+        console.log("received message on main frame, length " + event.data.length);
+        if(mainFrameTestLoop) nativeMessagePort.postMessage("app://data?len=1000000&mainFrame");
     }
 
     function strToUint16Array(str, av) {

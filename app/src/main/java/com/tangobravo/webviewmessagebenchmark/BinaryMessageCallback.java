@@ -2,9 +2,11 @@ package com.tangobravo.webviewmessagebenchmark;
 
 import android.net.Uri;
 import android.util.Log;
+import android.webkit.WebView;
 
 import androidx.webkit.WebMessageCompat;
 import androidx.webkit.WebMessagePortCompat;
+import androidx.webkit.WebViewCompat;
 
 
 public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallbackCompat {
@@ -13,17 +15,22 @@ public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallba
         System.loadLibrary("native");
     }
 
+    private WebView webView;
+    private Uri targetOrigin;
     private WebMessagePortCompat nativePort;
     private WebMessageCompat webMessage;
     private int messageLen = 0;
 
-    public BinaryMessageCallback(WebMessagePortCompat port) {
+    public BinaryMessageCallback(WebView view, Uri origin, WebMessagePortCompat port) {
+        webView = view;
+        targetOrigin = origin;
         nativePort = port;
     }
 
     public void onMessage(WebMessagePortCompat port, WebMessageCompat message) {
         Log.i("WebViewMessages", "Received message: " + message.getData());
         String data = message.getData();
+
         if(data != null && data.startsWith("app://")) {
             processAppMessage(data);
         }
@@ -39,6 +46,8 @@ public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallba
         if(lenStr == null) return;
         int len = Integer.parseInt(lenStr);
 
+        boolean mainFrame = messageUri.getBooleanQueryParameter("mainFrame", false);
+
         long start = System.nanoTime();
         if(messageLen != len) {
             String binaryString = fillRandomString(len);
@@ -47,7 +56,11 @@ public class BinaryMessageCallback extends WebMessagePortCompat.WebMessageCallba
         }
         long fillTime = System.nanoTime() - start;
         start = System.nanoTime();
-        nativePort.postMessage(webMessage);
+        if(mainFrame) {
+            WebViewCompat.postWebMessage(webView, webMessage, targetOrigin);
+        } else {
+            nativePort.postMessage(webMessage);
+        }
         long postTime = System.nanoTime() - start;
         Log.i("WebMessageBenchmark", String.format("Filling string: %d us, Posting message: %d us", (fillTime / 1000), (postTime / 1000)));
     }

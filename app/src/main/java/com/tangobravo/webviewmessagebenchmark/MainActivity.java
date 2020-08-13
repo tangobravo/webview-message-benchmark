@@ -98,15 +98,16 @@ public class MainActivity extends AppCompatActivity {
 
         long startTime = System.nanoTime();
 
+        Uri targetOrigin = Uri.fromParts("https", "example.chromium.org", null);
+
         WebMessagePortCompat[] ports = WebViewCompat.createWebMessageChannel(webView);
         nativePort = ports[0];
 
-        BinaryMessageCallback callback = new BinaryMessageCallback(nativePort);
+        BinaryMessageCallback callback = new BinaryMessageCallback(webView, targetOrigin, nativePort);
         nativePort.setWebMessageCallback(callback);
 
         WebMessagePortCompat[] transferPorts = {ports[1]};
         WebMessageCompat portMessage = new WebMessageCompat("msgchn", transferPorts);
-        Uri targetOrigin = Uri.fromParts("https", "example.chromium.org", null);
         WebViewCompat.postWebMessage(webView, portMessage, targetOrigin);
 
         long createTime = System.nanoTime() - startTime;
