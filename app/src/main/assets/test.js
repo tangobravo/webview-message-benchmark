@@ -7,9 +7,25 @@
     var nativeMessagePort = 0;
     var channelTestLoop = false;
     var mainFrameTestLoop = false;
+    var bytesSinceReset = 0;
+    var resetTime = 0;
+
+    function updateThroughputStats(bytesReceived) {
+        bytesSinceReset += bytesReceived;
+        let msSinceReset = performance.now() - resetTime;
+        if(msSinceReset > 1000) {
+            mbSinceReset = bytesSinceReset / 1000000;
+            secsSinceReset = msSinceReset / 1000;
+            throughput = mbSinceReset / secsSinceReset;
+            document.getElementById("results").innerText = `Throughput ${throughput.toFixed(1)} MB/sec`;
+            bytesSinceReset = 0;
+            resetTime = performance.now();
+        }
+    }
 
     function messageFromPort(event) {
         console.log("received message from port, length " + event.data.length);
+        updateThroughputStats(event.data.length * 2); // 2 bytes per character
         if(channelTestLoop) nativeMessagePort.postMessage("app://data?len=1000000");
     }
 
@@ -27,6 +43,8 @@
         if(!channelTestLoop) {
             channelTestLoop = true;
             mainFrameTestLoop = false;
+            bytesSinceReset = 0;
+            resetTime = performance.now();
             nativeMessagePort.postMessage("app://data?len=1000000");
         }
     }
@@ -36,6 +54,8 @@
         if(!mainFrameTestLoop) {
             channelTestLoop = false;
             mainFrameTestLoop = true;
+            bytesSinceReset = 0;
+            resetTime = performance.now();
             nativeMessagePort.postMessage("app://data?len=1000000&mainFrame");
         }
     }
@@ -72,6 +92,7 @@
         }
 
         console.log("received message on main frame, length " + event.data.length);
+        updateThroughputStats(event.data.length * 2); // 2 bytes per character
         if(mainFrameTestLoop) nativeMessagePort.postMessage("app://data?len=1000000&mainFrame");
     }
 
